@@ -1,0 +1,325 @@
+import React, { useState } from 'react';
+import { Mic, Megaphone, Settings, AlertTriangle, ChevronDown, ChevronUp, BookOpen, CheckCircle, Quote } from 'lucide-react';
+
+// --- 資料區塊 ---
+const CATEGORIES = [
+  { id: 'c1', name: '致詞與勉勵', icon: Mic, color: 'bg-blue-600', hoverColor: 'hover:bg-blue-700', lightColor: 'bg-blue-50', textColor: 'text-blue-700' },
+  { id: 'c2', name: '宣導', icon: Megaphone, color: 'bg-green-600', hoverColor: 'hover:bg-green-700', lightColor: 'bg-green-50', textColor: 'text-green-700' },
+  { id: 'c3', name: '校務說明', icon: Settings, color: 'bg-purple-600', hoverColor: 'hover:bg-purple-700', lightColor: 'bg-purple-50', textColor: 'text-purple-700' },
+  { id: 'c4', name: '危機發言', icon: AlertTriangle, color: 'bg-red-600', hoverColor: 'hover:bg-red-700', lightColor: 'bg-red-50', textColor: 'text-red-700' },
+];
+
+const TEMPLATES = {
+  'c1': {
+    atmosphere: '正向、溫暖、期許、建立夥伴關係。',
+    audience: '家長、志工、比賽師生團隊。',
+    opening: {
+      strategy: '表達歡迎 + 點出意義 + 感謝付出',
+      examples: [
+        '【對家長/志工】：校長、各位家長會代表（或志工夥伴）、各位老師，大家早安。我是OO主任。今天非常榮幸能代表學校，在這個重要的場合歡迎大家。學校的發展，一直仰賴各位的熱心參與...',
+        '【對師生團隊】：各位帶隊老師、各位即將出征的同學們，大家早。看到大家精神奕奕的樣子，主任感到非常驕傲。今天把大家聚在一起，不只是為了比賽，更是為了肯定大家這段時間以來的努力與汗水...'
+      ]
+    },
+    closing: {
+      strategy: '給予祝福 + 呼籲共好 + 再次致謝',
+      examples: [
+        '【對家長/志工】：最後，期盼未來的一年裡，我們能繼續攜手合作，成為孩子最強大的後盾。預祝今天的活動圓滿順利，各位身體健康、萬事如意，謝謝大家！',
+        '【對師生團隊】：最後，主任想提醒大家，得名與否是其次，最重要的是享受過程、注意自身安全。學校永遠是你們最溫暖的啦啦隊，我們等著你們凱旋歸來，大家加油！'
+      ]
+    }
+  },
+  'c2': {
+    atmosphere: '嚴謹但不嚴厲、重視教育意義、喚起危機意識。',
+    audience: '全校師生、家長、導師。',
+    opening: {
+      strategy: '破冰/引起動機 + 點出主題 + 強調關聯性',
+      examples: [
+        '【對學生】：校長、各位老師、各位同學，大家早安，我是學務主任。今天主任要利用一點時間，和大家談談一件跟我們每個人安全息息相關的重要事情，那就是...',
+        '【對教師】：各位同仁早安。近期因為（媒體報導/新法規），引起了廣大討論。為了保護孩子，也保障老師們的輔導管教權益，今天想和大家凝聚一下關於（宣導主題）的共識...'
+      ]
+    },
+    closing: {
+      strategy: '重申核心價值 + 提出具體期待（Call to Action）',
+      examples: [
+        '【對學生】：校園安全不能只靠老師，更需要每一位同學的幫忙。主任期盼大家從今天開始落實。如果有遇到困難，隨時來找老師或主任，我們一定會幫助你。謝謝大家。',
+        '【對教師】：推動此項宣導難免需要時間適應，但這是我們共同營造優質環境的必經之路。行政團隊會全力提供相關資源與協助，感謝各位同仁的辛勞與配合。'
+      ]
+    }
+  },
+  'c3': {
+    atmosphere: '邏輯清晰、有條理、展現行政支援的誠意、化解疑慮。',
+    audience: '教師、家長。',
+    opening: {
+      strategy: '說明背景/目的 + 預告架構 + 展現同理心',
+      examples: [
+        '【對教師】：各位老師早安。因應新學年度的規劃，為了讓接下來的教學能順利進行，今天特別向大家說明實施細節。我知道大家業務繁忙，因此我將重點分為三個部分來為大家快速說明...',
+        '【對家長】：各位家長好，我是總務主任。為了提供孩子更安全、優質的學習環境，學校即將進行（某項工程）。這段期間可能會帶來不便，因此今天特別來向各位說明我們的配套措施...'
+      ]
+    },
+    closing: {
+      strategy: '總結效益 + 開放溝通管道 + 表達行政支援',
+      examples: [
+        '【通用】：以上是針對此方案的說明。任何改變都需要時間適應，行政團隊的初衷是希望能優化環境。各位如果有任何疑慮或更好的建議，隨時歡迎跟本處室聯繫，我們會全力協助並滾動式修正。感謝大家！'
+      ]
+    }
+  },
+  'c4': {
+    atmosphere: '誠懇、穩重、透明、同理家長與受害者、不推諉責任。',
+    audience: '媒體記者、社會大眾。',
+    opening: {
+      strategy: '表明身分 + 敘述事實(定調) + 表達遺憾/痛心 + 優先處置',
+      examples: [
+        '【通用開場】：各位媒體記者朋友、社會大眾，大家好，我是OO國小的新聞發言人。針對本校在（時間）發生的（事件客觀簡述），學校感到非常的遺憾與痛心。目前我們最優先的工作是（確保安全/安撫情緒），以下就目前處置向各位說明...'
+      ]
+    },
+    closing: {
+      strategy: '說明後續作為(預防) + 承諾負責 + 呼籲給予空間',
+      examples: [
+        '【通用結尾】：發生這樣的事件，學校責無旁貸。我們將全力配合調查，絕不護短、也不推諉責任。同時已立即啟動輔導機制。後續若有進一步結果，會再統一向外界說明。懇請各界給予受事師生平復的空間，感謝關心。'
+      ]
+    }
+  }
+};
+
+const QUESTIONS = [
+  // 類別一：致詞與勉勵
+  { id: 1, categoryId: 'c1', title: '「您是教務主任，請於期初第一次家長代表大會，代表學校致詞。」', analysis: '展現教務主管的願景，建立親師夥伴關係，爭取家長對教學政策的認同與支持。', points: ['誠摯感謝與歡迎：感謝家長代表熱心參與，強調家長是學校進步的關鍵力量。', '教務願景與亮點：簡述本學期教務發展重點（如雙語、閱讀或科技教育），展現辦學用心。', '期許親師共好：呼籲家長持續與學校保持良好溝通，攜手成就每一個孩子。'] },
+  { id: 2, categoryId: 'c1', title: '「您是輔導主任，請於期初學校志工大會，向全體志工致詞。」', analysis: '激勵志工士氣，給予高度尊榮感，並說明輔導處本學期的支持計畫。', points: ['無私奉獻的肯定：讚揚志工「不計報酬、只為孩子」的偉大情操。', '校園守護者的價值：點出志工在交通、圖書、輔導等各面向對學校運作的不可或缺性。', '行政支援與祝福：承諾輔導處將提供豐富的志工培訓與聯誼資源，祝福志工服務樂在其中。'] },
+  { id: 3, categoryId: 'c1', title: '「您是輔導主任，請於新住民親子成長活動營開幕時，代表學校致詞。」', analysis: '展現學校對多元文化的包容，降低新住民家長的疏離感，推廣家庭教育。', points: ['友善包容的歡迎：傳達「多元文化一家親」的溫馨氛圍，歡迎新住民家庭。', '活動目的與意義：說明營隊旨在促進親子互動、文化交流與建立互助網絡。', '鼓勵參與及回饋：鼓勵家長放鬆心情享受活動，並將這份快樂延續到家庭生活中。'] },
+  { id: 4, categoryId: 'c1', title: '「明年10月學校欣逢60週年校慶，畢業校友發起成立校友會，您是主任，代表學校出席第1次發起人籌備會，應邀會中致詞。」', analysis: '喚起校友的情感連結，爭取校友會對 60 週年校慶的資源挹注與支持。', points: ['飲水思源與榮耀：感謝校友在各行各業發光發熱，母校以各位為榮。', '60週年願景擘畫：預告校慶的宏大意義，說明學校目前的創新與進步。', '群策群力共襄盛舉：誠摯邀請校友會成為校慶的最強後盾，有錢出錢、有力出力。'] },
+  { id: 5, categoryId: 'c1', title: '「您是學務主任，請於教師晨會時，向全體教師表達學校代表本市，參加全國交通安全教育比賽的意義價值，並有效糾合意志、全力準備之勉勵。」', analysis: '化解教師認為「比賽增加工作量」的阻力，賦予參賽崇高的教育價值以激勵士氣。', points: ['肯定日常付出：強調能代表參賽，是因為全體老師平時紮實的交安教育與導護工作。', '昇華教育價值：說明交安比賽不是為了獎盃，而是為了「守護每個孩子平安長大」的生命價值。', '行政後盾與共勉：承諾學務處會扛起主要行政作業，期盼全校齊心協力，展現學校亮點。'] },
+  { id: 6, categoryId: 'c1', title: '「您是教務主任，請向即將對外參加全國國語文競賽教師與學生團隊，進行行前鼓勵。」', analysis: '賽前穩定軍心，減輕師生壓力，並展現學校全力的關懷與支持。', points: ['讚賞培訓歷程：肯定師生這段時間以來犧牲休息、辛苦集訓的毅力。', '建立健康心態：提醒得失心不要太重，發揮平時實力、享受比賽舞台才是重點。', '溫暖後盾支持：宣告學校永遠是最堅強的啦啦隊，預祝旅途平安、凱旋歸來。'] },
+  { id: 7, categoryId: 'c1', title: '「您是輔導主任，參加於校內舉辦的社區樂齡學習活動，代表學校致詞。」', analysis: '推廣終身學習理念，促進學校與社區資源的共榮共好。', points: ['敬佩學習精神：對長輩們「活到老、學到老」的熱忱表達最高敬意。', '資源共享理念：說明學校不只是孩子的學校，也是社區居民的學習中心。', '身心健康期許：祝福長輩們在活動中交到好朋友、保持身心活躍與健康。'] },
+  { id: 8, categoryId: 'c1', title: '「您是學務主任，請向全體六年級師生進行畢業旅行行前致詞。」', analysis: '在充滿興奮的氛圍中，巧妙置入安全與紀律的規範，兼顧感性與理性。', points: ['共創美好回憶：肯定畢旅是童年最珍貴的時刻，期盼大家玩得開心。', '重申安全紀律：嚴正提醒「安全第一、團體行動、聽從師長指揮」三大鐵律。', '感恩惜福教育：提醒孩子感謝父母的成全與老師的辛勞，做個有教養的小大人。'] },
+  
+  // 類別二：宣導
+  { id: 9, categoryId: 'c2', title: '「您是學務主任，請於朝會時，向全體師生進行安全健康上網及網路使用不當行為宣導。」', analysis: '提升學生資訊素養，防範網路沉迷與網路霸凌等不當行為。', points: ['網路雙面刃：點出網路帶來學習便利，但也隱藏詐騙、沉迷與霸凌的危機。', '健康上網守則：提出具體做法，如控制時間（3010原則）、不隨意透露個資、不惡意留言。', '求助與通報：宣導若在網路上遇到威脅或不舒服，務必截圖保留證據並告訴師長。'] },
+  { id: 10, categoryId: 'c2', title: '「您是總務主任，請於學生朝會宣導愛惜公物的重要性及運動器材、兒童遊樂設施和學校各項設備的正確使用方式。」', analysis: '培養學生公德心，並預防因不當使用遊具造成的校園安全事故。', points: ['公德心建立：傳達「學校就是我們的家」，公物需要每一位同學共同愛護。', '安全操作規範：針對常發生意外的遊具（如鞦韆、溜滑梯）說明正確且安全的使用步驟。', '通報與獎勵機制：鼓勵同學若發現公物損壞，不靠近並主動通報老師，共同維護校園安全。'] },
+  { id: 11, categoryId: 'c2', title: '「您是學務主任，請於教師晨會時，向全體教師宣導正向管教的意涵及實施策略。」', analysis: '強化教師法治觀念，落實零體罰政策，並提供具體的輔導管教策略。', points: ['法規與零體罰底線：重申教育法規要求，明確定義何謂體罰與不當管教，保障師生權益。', '正向管教核心理念：宣導「以同理代替指責、以引導代替懲罰」的教育心法。', '行政協同支援：強調學務處與輔導處會作為老師的後盾，遇到困難個案請隨時啟動三級輔導。'] },
+  { id: 12, categoryId: 'c2', title: '「您是學務主任，因應教育部最新規範，學校即將實施全新的「校園行動載具(手機)管理規範」，請在家長代表大會上向家長說明新制重點與配合事項。」', analysis: '化解家長對沒收手機的反彈，說明管理機制的正當性與具體流程。', points: ['政策初衷與理念：說明新制是為了保護學生視力、減少上課分心及避免網路霸凌。', '規範細節與流程：清楚說明「申請帶機條件、到校集中保管方式、違規處置」等配套。', '親師合作呼籲：懇請家長在家中也建立手機使用規範，親師一致幫助孩子自律。'] },
+  { id: 13, categoryId: 'c2', title: '「您是學務主任，媒體報導學生使用電子菸的情事頻傳，請於朝會時，向全體師生加強電子菸危害與菸害防制宣導。」', analysis: '破解學生對電子菸的迷思（以為無害），嚴正宣導校規與健康防制。', points: ['破解電子菸迷思：強調電子菸不僅含尼古丁會成癮，還有重金屬與致癌物，且常偽裝成糖果零食。', '勇敢拒絕技巧：教導學生如何面對同儕誘惑，堅定說不。', '校規處置與通報：嚴正聲明校園全面禁菸，若發現違規將依校規懲處並啟動戒菸輔導。'] },
+  { id: 14, categoryId: 'c2', title: '「您是學務主任，面臨目前MeToo事件頻上新聞版面，請於朝會時，向全體師生進行性別平等教育宣導。」', analysis: '建立學生的身體自主權觀念，宣導性平通報機制，落實校園性平零容忍。', points: ['身體自主權：宣導每個人都是自己身體的主人，學習尊重他人的界線。', '辨識性騷擾：說明只要讓自己感覺不舒服、被冒犯的言語或觸碰，就可能是性騷擾。', '勇敢發聲不隱忍：宣導校內的求助管道，保證學校會嚴密保護通報者並啟動性平調查。'] },
+  { id: 15, categoryId: 'c2', title: '「您是輔導主任，請於朝會時，針對媒體報導，學校附近放學期間發生重大車禍事件，向全校師生進行安全教育及生命教育宣導。」', analysis: '藉由時事進行危機機會教育，同時安撫學生可能產生的恐懼心理。', points: ['事件反思與哀悼：以沉重但冷靜的語氣簡述事件，帶入生命脆弱與寶貴的生命教育。', '落實交安守則：強烈要求遵守「路口停看聽、不滑手機、穿著亮色衣物」等保命原則。', '心理關懷與輔導：告知若有同學因新聞感到害怕或焦慮，輔導室隨時敞開大門提供傾聽。'] },
+  { id: 16, categoryId: 'c2', title: '「您是輔導主任，請於導師會報時，向全體導師宣導脆弱家庭辨識、關懷與通報的重要性。」', analysis: '提升導師的敏感度，建立預防網絡，確保高風險學生不漏接。', points: ['一線辨識指標：教導導師觀察學生的外觀（不明傷痕、衣著不整）、出缺席或情緒突變。', '法定通報義務：宣導24小時法定通報時效與保密原則，消除導師怕惹麻煩的疑慮。', '行政與社政介入：說明只要導師發現異狀，輔導處會立刻接手並連結社政單位資源協助。'] },
+  { id: 17, categoryId: 'c2', title: '「您是輔導主任，學生於校園中使用髒話、不雅言詞及疑似言語霸凌情形日益嚴重，請於朝會中，向全體師生進行防制校園言語霸凌宣導。」', analysis: '導正校園次文化，區分「開玩笑」與「言語霸凌」的界線。', points: ['言語的力量：舉例說明「好話一句三冬暖，惡語傷人六月寒」，語言可以殺人。', '界定霸凌底線：強調只要讓對方感到受傷、恐懼，就不是開玩笑，而是言語霸凌。', '推動友善校園：發起「說好話運動」，並呼籲旁觀者勇敢制止或通報師長。'] },
+  { id: 18, categoryId: 'c2', title: '「您是輔導主任，請於教師晨會中，向全體教師宣導說明融合教育(普特融合)的概念與作為。」', analysis: '協助普通班教師接納特殊生，消除排斥心理，並提供特教支援承諾。', points: ['零拒絕的教育愛：宣導融合教育「看見差異、欣賞多元」的核心理念。', '班級經營與調整：分享簡單實用的通用設計教學（UDL）與同儕互助策略。', '特教團隊強大後盾：承諾特教組及資源班老師會提供個別化教育計畫（IEP）諮詢與入班協助。'] },
+  { id: 19, categoryId: 'c2', title: '「您是輔導主任，請於兒童節慶祝大會上，向全校師生宣導「情緒覺察」的重要性，並教導學生一個簡單的情緒調節小技巧。」', analysis: '結合節慶歡樂氣氛，進行實用的SEL（社會情緒學習）教育。', points: ['擁抱所有情緒：告訴孩子生氣、難過和開心一樣，都是正常且重要的人生夥伴。', '練習情緒覺察：引導孩子辨識身體的警訊（如心跳加快、拳頭緊握就是生氣了）。', '實作調節技巧：現場帶領全校實作一個簡單技巧（如：深呼吸烏龜法、數到十冷靜法）。'] },
+  { id: 20, categoryId: 'c2', title: '「您是教務主任，請於教師晨會中，說明雙語政策相關推動規劃，並招募有志投入的教師，共同組成教學推動團隊。」', analysis: '降低教師對雙語教學的恐懼，強調行政支援，成功招募先行團隊。', points: ['政策願景與減壓：說明雙語是國家趨勢，但學校採「漸進式、學科知識為主、不強求全英語」的無壓模式。', '推動規劃與培力：說明未來的研習地圖與共備機制，強調大家一起學，不會讓老師單打獨鬥。', '招募誘因與邀請：提出實質誘因（如減授課、經費補助、公假研習），誠摯邀請熱血教師加入種子團隊。'] },
+
+  // 類別三：校務說明
+  { id: 21, categoryId: 'c3', title: '「您是教務主任，請於課發會會議時，向教師說明學校實施本土教育的相關內容。」', analysis: '確保本土語文課程符合法規，並結合校本特色，引導課發會委員凝聚共識。', points: ['法規對應與排課：說明課綱對本土語文的節數規定及本校各年級的排課現況。', '師資盤點與聘任：說明校內現有師資專長、認證狀況及教支人員的聘用規劃。', '融入校本特色：鼓勵將本土文化、社區踏查融入彈性學習課程，深化學習意義。'] },
+  { id: 22, categoryId: 'c3', title: '「您是教務主任，請於教師專業學習社群活動時，向教師說明學校校訂課程編擬應注意重點。」', analysis: '指導教師開發具備「素養導向」且符合「學校願景」的彈性課程。', points: ['扣緊學校願景：提醒課程目標必須對應學校願景與學生圖像，形塑學校特色。', '落實素養導向：強調課程設計應連結學生生活情境，培養解決真實問題的能力。', '多元評量設計：提醒跳脫紙筆測驗，規劃實作、展演或檔案評量等多元產出。'] },
+  { id: 23, categoryId: 'c3', title: '「您是教務主任，請於課發會會議時，向教師說明新學年度學校課程評鑑的實施規劃。」', analysis: '消除教師對「評鑑等於考核」的抗拒，建立課程品保的PDCA循環。', points: ['正向評鑑觀念：澄清評鑑是為了「為課程把脈、幫助學生學得更好」，而非考核教師績效。', '簡化實施流程：說明具體的自評、同儕互評期程，強調表單盡量簡化、避免行政干擾。', '評鑑結果應用：說明評鑑結果將作為明年修正教學計畫與爭取設備經費的依據。'] },
+  { id: 24, categoryId: 'c3', title: '「您是教務主任，學校近期導入AI 輔助教學工具，請於教師晨會中，說服教師嘗試運用新工具來優化備課效率。」', analysis: '推動數位轉型，用「減輕工作負擔」的痛點行銷，降低科技焦慮。', points: ['直擊備課痛點：點出老師平日業務繁重，AI可以成為最得力的「數位助教」。', '實務效益展示：舉例說明AI如何快速生成教案、學習單或出題，大幅節省時間。', '增能培訓規劃：宣布將舉辦實作工作坊，手把手教學，保證零基礎也能輕鬆上手。'] },
+  { id: 25, categoryId: 'c3', title: '「您是教務主任，請於寒暑假教師備課日，向教師說明學校跨領域統整課程共同備課之方式。」', analysis: '打破學科本位，建立社群共備文化，推動跨領域教學。', points: ['跨域學習的必要性：說明未來世界的挑戰不是單一學科能解決，需透過跨域統整培養核心素養。', '共備流程與模式：提出具體的共備SOP（尋找核心主題、拆解學科節數、協同教學設計）。', '行政支持與資源：承諾教務處會安排共同空堂、提供茶水經費，全力支援社群運作。'] },
+  { id: 26, categoryId: 'c3', title: '「您是總務主任，學校正在規劃通學步道改善工程，請於教師晨會時，以交通安全教育的角度，向全體教師說明通學步道的設計理念。」', analysis: '爭取教師對施工期不便的諒解，並賦予硬體工程「境教」的教育意義。', points: ['現況痛點與危機：點出目前人車爭道、人行道狹窄等威脅學生安全的現狀。', '人本交通設計理念：說明新步道「退縮圍牆、綠美化、人車分道」的安全與美學設計。', '施工期間配套與期許：說明替代動線，並請老師將此工程化為交安教育的活教材。'] },
+  { id: 27, categoryId: 'c3', title: '「您是總務主任，操場鋪面受損，因應改善工程，必須暫停所有操場活動課程，請於朝會向全體師生說明暫停使用相關規定及工地安全措施。」', analysis: '兼顧工地安全宣導與學生權益保障，妥善規劃體育課替代方案。', points: ['願景預告與忍耐：說明短暫的不便是為了換來未來更平整、更安全的PU跑道。', '嚴格工地安全紀律：嚴禁任何人跨越施工圍籬，違者將予重懲以維護生命安全。', '替代空間規劃：清楚說明這段期間體育課與下課活動的替代區域（如風雨球場、中庭）。'] },
+  { id: 28, categoryId: 'c3', title: '「您是總務主任，請於新生家長座談會時，向家長說明校園安全防護機制的具體作法。」', analysis: '安定新生家長的心，展現學校在軟硬體防護上的嚴密規劃與執行力。', points: ['硬體防護網：介紹校內的監視死角消除計畫、電子圍籬與緊急求救鈴設置。', '人員門禁管制：說明上課期間嚴格關閉側門、實施訪客實名制換證的把關機制。', '軟體演練與教育：說明定期的防震防災演練及警民連線機制，構築安全防護網。'] },
+  { id: 29, categoryId: 'c3', title: '「您是總務主任，請於朝會時，向全校師生宣導節能減碳、減塑愛地球的觀念及學校的具體措施。」', analysis: '推動環境教育，落實永續校園SDGs指標，將觀念轉化為具體行動。', points: ['環境危機與責任：以極端氣候為例，喚起師生對地球發燒的危機意識。', '校園綠色行動：宣達具體規範，如班級冷氣控溫26度、隨手關燈、減少使用一次性餐具。', '生活實踐呼籲：鼓勵大家從每天的「垃圾確實分類」做起，愛地球就在日常中。'] },
+  { id: 30, categoryId: 'c3', title: '「您是學務主任，請於教師晨會中，向教師說明新學年度導師聘任方式及學校對導師班級經營的相關原則與配合事項。」', analysis: '建立公平公開的導師聘任制度，並期勉導師落實正向管教與親師溝通。', points: ['公開透明的聘任機制：說明依據校內「導師聘任辦法」，兼顧教師意願與積分公平輪替。', '班級經營核心價值：期勉導師營造友善正向的班級氣氛，重視每一位學生的獨特性。', '學務支援與親師溝通：承諾學務處是導師的後盾，並提醒導師落實與家長的良性互動。'] },
+
+  // 類別四：危機發言
+  { id: 31, categoryId: 'c4', title: '「您是新聞發言人，某日學生使用自立午餐過後，接連有四、五十位學生出現腹瀉、嘔吐等現象，已送往多所醫院急診室，請向媒體說明學校的處理方式。」', analysis: '安定社會恐慌，展現急救效率，並配合食安調查。', points: ['優先救護與陪伴：表達遺憾，說明已將學生全數送醫，並派師長至各醫院陪伴照顧。', '保全證據與通報：說明已啟動校安通報，並封存當日食餘檢體，全力配合衛生局檢驗。', '供餐應變與慰問：宣布廚房暫停運作、啟動備用供餐方案，承諾學校負起醫療與慰問責任。'] },
+  { id: 32, categoryId: 'c4', title: '「您是新聞發言人，某班2位學生，於掃地時間把玩竹掃把，進而互相揮擊，致使其中1位眼睛受傷，視力嚴重受損。受傷學生家長憤怒之下，投書媒體控訴學校處理不當，肇事學生家長不聞不問，請向媒體說明學校的處理方式。」', analysis: '拆解家長怒火，澄清學校無隱匿作為，擔起調解與輔導責任。', points: ['表達痛心與還原處置：對學生重傷深感痛心，說明事發當下學校第一時間的急救與通報作為。', '積極調解與醫療協助：澄清學校並未冷處理，正積極聯繫肇事家長出面，並提供受傷學生後續醫療協助。', '強化安全與心理輔導：承諾加強校園勞動安全教育，並對目擊學生進行創傷心理輔導。'] },
+  { id: 33, categoryId: 'c4', title: '「您是新聞發言人，某生在午休時，遭2名同班男同學強押到廁所脫褲子摸下體，回家後多日做惡夢，並因畏懼不敢上學，請向媒體說明學校的處理方式。」', analysis: '展現對性平事件的「零容忍」態度，恪守性平法規，保護被害人。', points: ['嚴正定調與依法通報：譴責暴力與性平違規，說明已於24小時內完成校安與社政通報。', '啟動調查與隔離保護：說明性平會已受理調查，將行為人與被害人隔離，確保被害人就學安全。', '心理復健與法治教育：安排專輔人員對被害生進行心理諮商，並對全校加強性平與身體自主權教育。'] },
+  { id: 34, categoryId: 'c4', title: '「您是新聞發言人，5年級某班導師為初任教師，教學成效不彰，師生衝突不斷，家長連署要求立即更換老師，請向媒體說明學校的處理方式。」', analysis: '依法行政處理不適任教師疑慮，同時同理家長焦慮並提供教師輔導支持。', points: ['同理家長保障受教權：深刻理解家長對學習品質的擔憂，承諾學生的受教權是學校的首要考量。', '啟動機制入班輔導：說明已依規定啟動處理機制，教務與輔導處已入班觀課並提供該師輔導計畫。', '依法處置絕不護短：若輔導期滿未見改善，將依法召開教評會處置；期間也會安排資深教師協同教學。'] },
+  { id: 35, categoryId: 'c4', title: '「您是新聞發言人，某日放學時，正在路口執勤的志工與過馬路的學生遭受闖紅燈的駕駛撞傷，其中有1名學生不幸過世，志工及多名學生傷重送往醫院。請向媒體說明學校的處理方式。」', analysis: '處理重大死亡悲傷事件，譴責違規，並呼籲改善交通環境。', points: ['最深哀悼與全力協助：對逝去的年輕生命及受傷志工表達無比悲痛，校方正全力協助家屬處理後事與醫療。', '悲傷輔導與安心安家：立即啟動危機處理小組，針對死傷學生的班級進行悲傷輔導，安撫師生情緒。', '譴責違規與環境改善：強烈譴責肇事駕駛，並將行文交通局強烈要求改善該路口號誌及增設科技執法。'] },
+  { id: 36, categoryId: 'c4', title: '「您是新聞發言人，有女學生家長向媒體投訴，學校管樂團指導老師對女學生不當肢體接觸，甚至出言威脅不得聲張，身心嚴重受創，請向媒體說明學校的處理方式。」', analysis: '處置教職員性平事件，強調立即停聘、擴大調查與保護學生。', points: ['零容忍與立即停聘：對此事深表震驚與痛心，已依性平法通報，該師即日起停聘靜候調查，絕不護短。', '保護學生與專業輔導：嚴禁該師再接觸學生，並立即安排心理諮商師介入輔導受害女學生。', '擴大清查與機制補漏：將主動發信給全團家長啟動擴大調查，並重新檢視外聘社團老師的考核與巡堂機制。'] },
+  { id: 37, categoryId: 'c4', title: '「您是新聞發言人，學校桌球隊發生外聘教練毆打體罰學生致使受傷事件，家長拿驗傷單投訴媒體，請向媒體說明學校的處理方式。」', analysis: '反對體罰，妥善處理外聘人員違規，協助家長爭取權益。', points: ['嚴厲譴責體罰行為：重申學校落實零體罰的鐵腕決心，對外聘教練的不當暴力行為表達嚴厲譴責。', '立即解聘與協助究責：說明該教練已立即解聘並通報教育局列管，校方會提供法律資源協助家長提告究責。', '全面檢討監督機制：承諾將強化運動團隊的管理機制，增加行政人員無預警巡視的頻率。'] },
+  { id: 38, categoryId: 'c4', title: '「您是新聞發言人，學校1名網紅學生，因網路霸凌發生自殤未遂事件，媒體聞風而至，請向媒體說明學校的處理方式。」', analysis: '處理高敏感的自殺防治與網路霸凌，抵擋媒體不當追問，保護學生隱私。', points: ['生命搶救與陪伴慰問：說明學生目前醫療狀況（生命跡象穩定），校長與主任正全程陪伴家屬度過難關。', '啟動防制霸凌調查：針對網路霸凌事件，已啟動校園霸凌防制準則進行追查，絕不姑息鍵盤暴力。', '籲請媒體與大眾自律：強烈懇請媒體及網友停止肉搜、停止轉傳不實訊息，避免對學生造成二度傷害。'] },
+  { id: 39, categoryId: 'c4', title: '「您是新聞發言人，學校圍牆邊的高大樹木長久未修剪，某日強風時連根拔起樹枝斷裂，經過的機車騎士被壓傷生命垂危，請向媒體說明學校的處理方式。」', analysis: '承擔校園設施設備管理不當的公共責任，展現負責與積極補救的態度。', points: ['誠摯道歉與承擔責任：針對校園樹木倒塌造成民眾重傷，代表學校致上最深歉意，校方絕對負責到底。', '專人關懷與理賠協助：已指派專責主任進駐醫院，全力協助家屬醫療事宜及後續的公共意外責任險理賠。', '全面體檢與立即修剪：已緊急聯絡專業樹醫及開口契約廠商，即日起針對全校樹木進行總體檢與危木移除。'] },
+  { id: 40, categoryId: 'c4', title: '「您是新聞發言人，學校發生5位4年級學生誤食具毒性油桐花籽出現嘔吐、腹瀉等中毒症狀，請向媒體說明緊急救護處理及後續植栽管理計畫。」', analysis: '處理意外中毒事件，將危機轉化為校園環境安全教育的契機。', points: ['醫療進度與現況：說明第一時間已由護理師急救並送醫，目前5位學生症狀皆已緩解、狀況穩定。', '立即封鎖與清除：事發後已拉起封鎖線，總務處已將該區域的掉落果實全面清除完畢。', '生態教育與防範：承諾會全面清查校內植栽，針對有毒植物設置明顯警告標語，並融入各班環境教育加強宣導。'] }
+];
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState(CATEGORIES[0].id);
+  const [expandedId, setExpandedId] = useState(null);
+
+  const toggleQuestion = (id) => {
+    setExpandedId(expandedId === id ? null : id);
+  };
+
+  const activeCategoryData = CATEGORIES.find(c => c.id === activeTab);
+  const filteredQuestions = QUESTIONS.filter(q => q.categoryId === activeTab);
+  const template = TEMPLATES[activeTab];
+
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-12">
+      {/* 標題區 */}
+      <header className="bg-white shadow-sm border-b border-slate-200 py-6 px-4 md:px-8">
+        <div className="max-w-6xl mx-auto flex items-center gap-3">
+          <BookOpen className="text-indigo-600 w-8 h-8" />
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">主任口語表達實戰演練儀表板</h1>
+            <p className="text-sm text-slate-500 mt-1">115年國小主任儲訓班校園溝通題庫大全 (共 40 題)</p>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto px-4 md:px-8 mt-8">
+        
+        {/* 情境切換 Tabs */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+          {CATEGORIES.map(category => {
+            const Icon = category.icon;
+            const isActive = activeTab === category.id;
+            return (
+              <button
+                key={category.id}
+                onClick={() => {
+                  setActiveTab(category.id);
+                  setExpandedId(null); // 切換分類時收合所有題目
+                }}
+                className={`flex items-center justify-center gap-2 py-4 px-2 rounded-xl border-2 transition-all duration-200
+                  ${isActive 
+                    ? `border-${category.color.split('-')[1]}-600 ${category.color} text-white shadow-md transform -translate-y-1` 
+                    : `border-slate-200 bg-white text-slate-600 hover:border-slate-300 ${category.hoverColor} hover:text-white`}`}
+              >
+                <Icon className={`w-5 h-5 ${isActive ? 'text-white' : ''}`} />
+                <span className="font-semibold">{category.name}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* 主要內容區：左側題庫 / 右側戰術板 */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* 左側題庫列表 (佔 2 欄) */}
+          <div className="lg:col-span-2 space-y-4">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <span className={`w-3 h-8 rounded-full ${activeCategoryData.color}`}></span>
+              {activeCategoryData.name} 題庫 ({filteredQuestions.length} 題)
+            </h2>
+            
+            {filteredQuestions.map((q, index) => (
+              <div 
+                key={q.id} 
+                className={`bg-white rounded-xl border transition-all duration-300 overflow-hidden shadow-sm hover:shadow-md
+                  ${expandedId === q.id ? `border-${activeCategoryData.color.split('-')[1]}-400 ring-1 ring-${activeCategoryData.color.split('-')[1]}-400` : 'border-slate-200'}`}
+              >
+                {/* 題目 Header (可點擊) */}
+                <button 
+                  onClick={() => toggleQuestion(q.id)}
+                  className="w-full text-left px-5 py-4 flex items-start justify-between gap-4 focus:outline-none"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`mt-1 flex-shrink-0 w-7 h-7 rounded-full ${activeCategoryData.lightColor} ${activeCategoryData.textColor} flex items-center justify-center font-bold text-sm`}>
+                      {index + 1}
+                    </div>
+                    <h3 className="font-medium text-lg leading-relaxed text-slate-800">{q.title}</h3>
+                  </div>
+                  <div className="mt-1.5 text-slate-400 flex-shrink-0">
+                    {expandedId === q.id ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                  </div>
+                </button>
+
+                {/* 題目詳情 (展開內容) */}
+                <div 
+                  className={`px-5 pb-5 pt-2 border-t border-slate-100 transition-all duration-300 ${expandedId === q.id ? 'block' : 'hidden'}`}
+                >
+                  {/* 題意分析 */}
+                  <div className="mb-4 bg-slate-50 rounded-lg p-4 border border-slate-100">
+                    <h4 className="text-sm font-bold text-slate-500 mb-1 flex items-center gap-1">
+                      <Quote className="w-4 h-4" /> 題意分析 (考官想聽的重點)
+                    </h4>
+                    <p className="text-slate-700 leading-relaxed font-medium">
+                      {q.analysis}
+                    </p>
+                  </div>
+
+                  {/* 三個說明重點 */}
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-500 mb-3 flex items-center gap-1">
+                      <CheckCircle className="w-4 h-4" /> 三個說明重點 (發言骨幹)
+                    </h4>
+                    <div className="space-y-3">
+                      {q.points.map((point, pIdx) => {
+                        const [title, content] = point.split('：');
+                        return (
+                          <div key={pIdx} className="flex items-start gap-2">
+                            <span className={`flex-shrink-0 mt-0.5 text-sm w-5 h-5 rounded-full ${activeCategoryData.color} text-white flex items-center justify-center`}>
+                              {pIdx + 1}
+                            </span>
+                            <p className="text-slate-700">
+                              <span className="font-bold mr-1">{title}：</span>
+                              {content}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* 右側戰術提示版 (佔 1 欄) */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-6">
+              <div className={`rounded-xl border ${activeCategoryData.lightColor} border-${activeCategoryData.color.split('-')[1]}-200 p-1`}>
+                <div className="bg-white rounded-lg p-5">
+                  <h2 className={`text-xl font-bold mb-4 flex items-center gap-2 ${activeCategoryData.textColor}`}>
+                    <activeCategoryData.icon className="w-6 h-6" />
+                    溝通戰術板
+                  </h2>
+                  
+                  <div className="space-y-5">
+                    {/* 情境設定 */}
+                    <div className="bg-slate-50 rounded-lg p-3 text-sm">
+                      <p className="mb-1"><span className="font-bold text-slate-700">🎯 情境氛圍：</span>{template.atmosphere}</p>
+                      <p><span className="font-bold text-slate-700">👥 主要對象：</span>{template.audience}</p>
+                    </div>
+
+                    <div className="divider h-px bg-slate-200"></div>
+
+                    {/* 開場語策略 */}
+                    <div>
+                      <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${activeCategoryData.color}`}></span>
+                        開場語策略
+                      </h3>
+                      <p className="text-sm font-semibold text-slate-600 mb-3 bg-slate-100 inline-block px-2 py-1 rounded">
+                        {template.opening.strategy}
+                      </p>
+                      <div className="space-y-2">
+                        {template.opening.examples.map((ex, i) => (
+                          <div key={i} className="text-sm text-slate-700 leading-relaxed border-l-2 border-slate-300 pl-3">
+                            <span className="font-bold block text-slate-800 mb-0.5">{ex.split('：')[0]}</span>
+                            {ex.split('：')[1] || ex}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 結尾詞策略 */}
+                    <div className="pt-2">
+                      <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${activeCategoryData.color}`}></span>
+                        結尾詞策略
+                      </h3>
+                      <p className="text-sm font-semibold text-slate-600 mb-3 bg-slate-100 inline-block px-2 py-1 rounded">
+                        {template.closing.strategy}
+                      </p>
+                      <div className="space-y-2">
+                        {template.closing.examples.map((ex, i) => (
+                          <div key={i} className="text-sm text-slate-700 leading-relaxed border-l-2 border-slate-300 pl-3">
+                            <span className="font-bold block text-slate-800 mb-0.5">{ex.split('：')[0]}</span>
+                            {ex.split('：')[1] || ex}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  );
+}
